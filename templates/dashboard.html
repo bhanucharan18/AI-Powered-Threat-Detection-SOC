@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% from "_macros.html" import alert_table %}
+{% block content %}
+<h1>Authentication overview</h1>
+<section class="panel">
+  <h2>Import authentication logs</h2>
+  <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>CSV file <input type="file" name="file" accept=".csv" required></label>
+    <button type="submit">Import and analyze</button>
+  </form>
+  <p class="muted">Columns: timestamp, username, source_ip, status. Timestamps are treated as UTC. Max 2 MB.</p>
+</section>
+
+<section class="stats">
+  <div class="stat"><span class="num">{{ d.total_events }}</span>Events analyzed</div>
+  <div class="stat"><span class="num">{{ d.successes }}</span>Successful logins</div>
+  <div class="stat"><span class="num">{{ d.failures }}</span>Failed logins</div>
+  <div class="stat alertstat"><span class="num">{{ d.total_alerts }}</span>Alerts</div>
+</section>
+
+{% if d.total_events == 0 %}
+<section class="panel"><p class="empty">No data yet. Import <code>sample_data/sample_auth_logs.csv</code> to see the dashboard fill in.</p></section>
+{% else %}
+<section class="grid2">
+  <div class="panel"><h2>Login activity per hour (UTC)</h2><canvas id="activity" height="200" aria-label="Login activity chart" role="img"></canvas></div>
+  <div class="panel"><h2>Alerts by severity</h2><canvas id="severity" height="200" aria-label="Alerts by severity chart" role="img"></canvas></div>
+</section>
+<p id="chart-fallback" class="muted" hidden>Charts could not load (Chart.js is fetched from a CDN). The tables below still show the data.</p>
+<section class="grid2">
+  <div class="panel"><h2>Most frequently flagged IPs</h2>
+    <table><thead><tr><th>Source IP</th><th>Alerts</th><th>Failed attempts</th></tr></thead><tbody>
+    {% for r in d.top_ips %}<tr><td class="mono"><a href="{{ url_for('logs', ip=r.ip) }}">{{ r.ip }}</a></td><td>{{ r.alerts }}</td><td>{{ r.attempts }}</td></tr>
+    {% else %}<tr><td colspan="3" class="empty">No IP-based alerts.</td></tr>{% endfor %}</tbody></table></div>
+  <div class="panel"><h2>Recent imports</h2>
+    <table><thead><tr><th>File</th><th>Accepted</th><th>Rejected</th></tr></thead><tbody>
+    {% for b in d.batches %}<tr><td>{{ b.filename }}</td><td>{{ b.rows_accepted }}</td><td>{{ b.rows_rejected }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+<section class="panel"><h2>Latest alerts</h2>{{ alert_table(d.latest_alerts) }}</section>
+<script type="application/json" id="dash-data">{{ {"activity": d.activity, "severity": d.severity}|tojson }}</script>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if d.total_events %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endif %}{% endblock %}

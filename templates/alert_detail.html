@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% from "_macros.html" import sev, conf %}{% block title %}Alert {{ alert.id }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('alerts') }}">All alerts</a></p>
+<h1>Alert {{ alert.id }}: {{ alert.rule_name }}</h1>
+<section class="panel">
+  <p>{{ sev(alert.severity) }} severity {{ conf(alert.confidence) }} confidence · Status: <strong>{{ alert.status }}</strong></p>
+  <p class="why"><strong>Why it fired.</strong> {{ alert.explanation }}</p>
+  <dl>
+    <dt>Rule</dt><dd>{{ alert.rule_id }}: window {{ alert.window_seconds // 60 }} min</dd>
+    <dt>{{ 'Source IP' if alert.subject_type == 'ip' else 'Account' }}</dt><dd class="mono">{{ alert.subject }}</dd>
+    <dt>Source IPs involved</dt><dd class="mono">{{ alert.source_ips }}</dd>
+    <dt>Usernames involved</dt><dd>{{ alert.usernames }}</dd>
+    <dt>Window</dt><dd class="mono">{{ alert.first_seen }} to {{ alert.last_seen }} UTC</dd>
+    <dt>Failed attempts</dt><dd>{{ alert.attempt_count }}</dd>
+  </dl>
+  <p class="muted">Severity is the estimated urgency; confidence is how strongly the evidence supports the detection. Neither confirms an attack.</p>
+</section>
+
+<section class="grid2">
+  <div class="panel"><h2>Recommended investigation steps</h2><ol>{% for s in steps %}<li>{{ s }}</li>{% endfor %}</ol>
+    <p class="muted">No automatic blocking or account changes are performed by this tool.</p></div>
+  <div class="panel"><h2>Update status</h2>
+    <form method="post" action="{{ url_for('alert_status', alert_id=alert.id) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="status" aria-label="Status">{% for s in STATUSES %}<option {{ 'selected' if alert.status==s }}>{{ s }}</option>{% endfor %}</select>
+      <button type="submit">Save status</button></form>
+    <h2>Analyst notes</h2>
+    <form method="post" action="{{ url_for('alert_note', alert_id=alert.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <textarea name="note" rows="3" maxlength="2000" required aria-label="Note"></textarea>
+      <button type="submit">Add note</button></form>
+    {% for n in notes %}<div class="note"><span class="muted mono">{{ n.created_at }} UTC</span><p>{{ n.note }}</p></div>
+    {% else %}<p class="empty">No notes yet.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="panel"><h2>Evidence timeline ({{ events|length }} events)</h2>
+<div class="scroll"><table><thead><tr><th>Event</th><th>Timestamp (UTC)</th><th>Username</th><th>Source IP</th><th>Status</th><th>Role</th></tr></thead><tbody>
+{% for e in events %}<tr><td>{{ e.id }}</td><td class="mono">{{ e.timestamp }}</td><td>{{ e.username }}</td><td class="mono">{{ e.source_ip }}</td>
+<td><span class="badge st-{{ e.status }}">{{ e.status }}</span></td><td>{{ 'triggered rule' if e.role == 'trigger' else 'context (login after failures)' }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

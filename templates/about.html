@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}About{% endblock %}
+{% block content %}
+<h1>About this prototype</h1>
+<section class="panel">
+<p>Log Analyzer imports authentication logs, applies three explainable rules and records evidence for each alert so an analyst can investigate. It is an educational SOC prototype: rule-based (no machine learning), run against synthetic data, and not a production SIEM. It has not had a production security audit.</p>
+<h2>Rules</h2>
+<ul>{% for id, rule in rules.items() %}<li><strong>Rule {{ id }}:</strong> {{ rule.name }}: at least {{ rule.threshold }} within {{ rule.window_seconds // 60 }} minutes (inclusive window).</li>{% endfor %}</ul>
+<h2>Severity and confidence</h2>
+<p>Every alert starts at <em>medium</em> severity. It rises one level if the peak count reaches twice the threshold, and one more level if a successful login for the same IP or account follows the failures within 10 minutes. Confidence is <em>low</em>, <em>medium</em> (peak at least 1.5× threshold) or <em>high</em> (peak at least 2× threshold). Real policies need organizational context and tuning. IP addresses are never labelled malicious from this data alone.</p>
+<h2>What it never does</h2><p>It does not block IPs, reset passwords, disable accounts or call external services.</p>
+</section>
+{% endblock %}

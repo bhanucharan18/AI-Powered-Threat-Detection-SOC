@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% from "_macros.html" import pager, alert_table %}{% block title %}Alerts{% endblock %}
+{% block content %}
+<h1>Alerts</h1>
+<form method="get" class="filters panel">
+  <label>Severity <select name="severity"><option value="">Any</option>
+    {% for s in severities %}<option {{ 'selected' if f.get('severity')==s }}>{{ s }}</option>{% endfor %}</select></label>
+  <label>Rule <select name="rule"><option value="">Any</option>
+    {% for r in ('A','B','C') %}<option {{ 'selected' if f.get('rule')==r }}>{{ r }}</option>{% endfor %}</select></label>
+  <label>Status <select name="status"><option value="">Any</option>
+    {% for s in STATUSES %}<option {{ 'selected' if f.get('status')==s }}>{{ s }}</option>{% endfor %}</select></label>
+  <label>From <input type="date" name="date_from" value="{{ f.get('date_from','') }}"></label>
+  <label>To <input type="date" name="date_to" value="{{ f.get('date_to','') }}"></label>
+  <button type="submit">Apply filters</button> <a href="{{ url_for('alerts') }}">Clear</a>
+</form>
+{{ alert_table(data.rows) }}
+{{ pager(data, 'alerts', args) }}
+{% endblock %}

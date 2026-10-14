@@ -1,0 +1,31 @@
+{% macro pager(data, endpoint, args) %}
+{% if data.pages > 1 %}
+<nav class="pager" aria-label="Pagination">
+  {% if data.page > 1 %}<a href="{{ url_for(endpoint, page=data.page-1, **args) }}">Previous</a>{% endif %}
+  <span>Page {{ data.page }} of {{ data.pages }} ({{ data.total }} rows)</span>
+  {% if data.page < data.pages %}<a href="{{ url_for(endpoint, page=data.page+1, **args) }}">Next</a>{% endif %}
+</nav>
+{% else %}<p class="muted">{{ data.total }} row(s)</p>{% endif %}
+{% endmacro %}
+
+{% macro sev(value) %}<span class="badge sev-{{ value }}">{{ value }}</span>{% endmacro %}
+{% macro conf(value) %}<span class="badge conf-{{ value }}">{{ value }}</span>{% endmacro %}
+
+{% macro alert_table(rows) %}
+<div class="scroll"><table>
+  <thead><tr><th>Severity</th><th>Confidence</th><th>Rule</th><th>Subject</th><th>First seen (UTC)</th><th>Attempts</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for a in rows %}
+    <tr>
+      <td>{{ sev(a.severity) }}</td><td>{{ conf(a.confidence) }}</td>
+      <td>{{ a.rule_name }}</td><td class="mono">{{ a.subject }}</td>
+      <td class="mono">{{ a.first_seen }}</td><td>{{ a.attempt_count }}</td>
+      <td>{{ a.status }}</td>
+      <td><a href="{{ url_for('alert_detail', alert_id=a.id) }}">Investigate</a></td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="empty">No alerts match. Import a CSV or relax the filters.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endmacro %}

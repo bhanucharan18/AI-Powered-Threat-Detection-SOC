@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}Reports{% endblock %}
+{% macro counts(d) %}<table><tbody>{% for k, v in d.items() %}<tr><td>{{ k }}</td><td>{{ v }}</td></tr>{% else %}<tr><td class="empty">None in this range.</td></tr>{% endfor %}</tbody></table>{% endmacro %}
+{% block content %}
+<h1>Reports</h1>
+<form method="get" class="filters panel">
+  <label>From <input type="date" name="date_from" value="{{ f.get('date_from','') }}"></label>
+  <label>To <input type="date" name="date_to" value="{{ f.get('date_to','') }}"></label>
+  <button type="submit">Apply range</button> <a href="{{ url_for('reports') }}">Clear</a>
+</form>
+<section class="stats">
+  <div class="stat"><span class="num">{{ r.events }}</span>Events in range</div>
+  <div class="stat"><span class="num">{{ r.by_status.get('success', 0) }}</span>Successful</div>
+  <div class="stat"><span class="num">{{ r.by_status.get('failure', 0) }}</span>Failed</div>
+  <div class="stat alertstat"><span class="num">{{ r.alerts }}</span>Alerts</div>
+</section>
+<section class="grid3">
+  <div class="panel"><h2>Alerts by rule</h2>{{ counts(r.by_rule) }}</div>
+  <div class="panel"><h2>Alerts by severity</h2>{{ counts(r.by_severity) }}</div>
+  <div class="panel"><h2>Investigation status</h2>{{ counts(r.by_investigation) }}</div>
+</section>
+<section class="panel"><h2>Export (respects the date range)</h2>
+  <p><a class="button" href="{{ url_for('export_events', **args) }}">Download events CSV</a>
+     <a class="button" href="{{ url_for('export_alerts', **args) }}">Download alerts CSV</a></p>
+  <p class="muted">Cells starting with = + - @ are prefixed with an apostrophe so spreadsheets do not treat them as formulas.</p></section>
+<section class="panel"><h2>Detection rules and limitations</h2>
+  <ul>{% for id, rule in rules.items() %}<li><strong>Rule {{ id }}:</strong> {{ rule.name }}: threshold {{ rule.threshold }}, window {{ rule.window_seconds // 60 }} min.</li>{% endfor %}</ul>
+  <p class="muted">Thresholds are educational defaults. Shared NAT/proxy addresses, locked-out users and stale service credentials cause false positives. Alerts need analyst validation.</p></section>
+{% endblock %}

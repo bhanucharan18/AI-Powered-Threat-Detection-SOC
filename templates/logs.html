@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% from "_macros.html" import pager %}{% block title %}Logs{% endblock %}
+{% block content %}
+<h1>Log explorer</h1>
+<form method="get" class="filters panel">
+  <label>From <input type="date" name="date_from" value="{{ f.get('date_from','') }}"></label>
+  <label>To <input type="date" name="date_to" value="{{ f.get('date_to','') }}"></label>
+  <label>Source IP <input name="ip" value="{{ f.get('ip','') }}" placeholder="203.0.113.50"></label>
+  <label>Username <input name="username" value="{{ f.get('username','') }}" maxlength="128"></label>
+  <label>Status <select name="status"><option value="">Any</option>
+    {% for s in ('success','failure') %}<option value="{{ s }}" {{ 'selected' if f.get('status')==s }}>{{ s }}</option>{% endfor %}</select></label>
+  <button type="submit">Apply filters</button> <a href="{{ url_for('logs') }}">Clear</a>
+</form>
+<div class="scroll"><table>
+<thead><tr><th>ID</th><th>Timestamp (UTC)</th><th>Username</th><th>Source IP</th><th>Status</th><th>Batch</th></tr></thead><tbody>
+{% for e in data.rows %}<tr><td>{{ e.id }}</td><td class="mono">{{ e.timestamp }}</td><td>{{ e.username }}</td><td class="mono">{{ e.source_ip }}</td>
+<td><span class="badge st-{{ e.status }}">{{ e.status }}</span></td><td>{{ e.batch_id }}: {{ e.filename }}</td></tr>
+{% else %}<tr><td colspan="6" class="empty">No events match. Import a CSV from the dashboard or clear the filters.</td></tr>{% endfor %}
+</tbody></table></div>
+{{ pager(data, 'logs', args) }}
+{% endblock %}
